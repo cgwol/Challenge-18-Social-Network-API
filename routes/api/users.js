@@ -54,7 +54,7 @@ router.put('/:userID', async (req, res) => {
 })
 
 router.delete('/:userID', async (req, res) => {
-    try{
+    try {
         const user = await User.findByIdAndDelete({ _id: req.params.userID });
 
         if (!user) {
@@ -63,7 +63,68 @@ router.delete('/:userID', async (req, res) => {
 
         res.status(200).json({ message: "User deleted successfully!" });
 
-    }catch(err){
+    } catch (err) {
+        res.status(500).json(err);
+    }
+})
+
+
+router.post('/:userID/friends/:friendID', async (req, res) => {
+    try {
+
+        const user = await User.findOneAndUpdate(
+            { _id: req.params.userID },
+            { $addToSet: { friends: req.params.friendID } },
+            { runValidators: true, new: true }
+        )
+
+        const friend = await User.findOneAndUpdate(
+            { _id: req.params.friendID },
+            { $addToSet: { friends: req.params.userID } },
+            { runValidators: true, new: true }
+        )
+
+        if (!user) {
+            res.status(404).json({ message: "No user with that ID" });
+        }
+
+        if (!friend) {
+            res.status(404).json({ message: "No user with that ID to friend" });
+        }
+
+        res.status(200).json(user)
+
+    } catch (err) {
+        res.status(500).json(err);
+    }
+})
+
+router.delete('/:userID/friends/:friendID', async (req, res) => {
+    try {
+
+        const user = await User.findOneAndUpdate(
+            { _id: req.params.userID },
+            { $pull: { friends: req.params.friendID } },
+            { runValidators: true, new: true }
+        )
+
+        const friend = await User.findOneAndUpdate(
+            { _id: req.params.friendID },
+            { $pull: { friends: req.params.userID } },
+            { runValidators: true, new: true }
+        )
+
+        if (!user) {
+            res.status(404).json({ message: "No user with that ID" });
+        }
+
+        if (!friend) {
+            res.status(404).json({ message: "No user with that ID to remove friend" });
+        }
+
+        res.status(200).json(user)
+
+    } catch (err) {
         res.status(500).json(err);
     }
 })
